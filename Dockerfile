@@ -5,7 +5,7 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 # Copiamos solo los archivos de dependencias primero.
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # ETAPA 2: production, imagen final ligera
 FROM node:18-alpine AS production
