@@ -1,0 +1,59 @@
+version: '3.8'
+
+# SERVICIOS
+services:
+# Servicio 1: Base de datos MySQL
+db:
+image: mysql:8.0
+container_name: mysql_db
+restart: unless-stopped
+environment:
+MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+MYSQL_DATABASE: ${DB_NAME}
+MYSQL_USER: ${DB_USER}
+MYSQL_PASSWORD: ${DB_PASSWORD}
+ports:
+- "3306:3306"
+volumes:
+- mysql_data:/var/lib/mysql
+- ./init:/docker-entrypoint-initdb.d
+networks:
+- backend_network
+healthcheck:
+test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_R
+interval: 10s
+timeout: 5s
+retries: 5
+start_period: 30s
+
+# Servicio 2: Backend Node.js
+backend:
+build:
+context: .
+dockerfile: Dockerfile
+container_name: nodejs_backend
+restart: unless-stopped
+environment:
+PORT: 3000
+DB_HOST: db
+DB_PORT: 3306
+DB_USER: ${DB_USER}
+DB_PASSWORD: ${DB_PASSWORD}
+DB_NAME: ${DB_NAME}
+ports:
+- "3000:3000"
+depends_on:
+db:
+condition: service_healthy
+networks:
+- backend_network
+
+# VOLÚMENES
+volumes:
+mysql_data:
+driver: local
+
+# REDES
+networks:
+backend_network:
+driver: bridge
